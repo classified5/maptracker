@@ -42,12 +42,12 @@
                 android:layout_weight="1"
                 android:text="Driving Mode" />
 
-            <!--<Button-->
-                <!--android:id="@+id/btnWalk"-->
-                <!--android:layout_width="0dp"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:layout_weight="1"-->
-                <!--android:text="Walking Mode" />-->
+            <Button
+                android:id="@+id/btnCurrent"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Walking Mode" />
         </LinearLayout>
 
     </LinearLayout>

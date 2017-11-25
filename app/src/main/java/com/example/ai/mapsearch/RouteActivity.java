@@ -1,20 +1,24 @@
 package com.example.ai.mapsearch;
 
-import android.content.pm.PackageManager;
+import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.graphics.Color;
-import android.os.Build;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.example.ai.mapsearch.API.ApiClient;
+import com.example.ai.mapsearch.API.RetrofitMaps;
+import com.example.ai.mapsearch.Background.LocationServices;
+import com.example.ai.mapsearch.Model.Destination;
 import com.example.ai.mapsearch.Model.Example;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -37,26 +41,39 @@ import retrofit.Retrofit;
 public class RouteActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
-    LatLng origin;
-    LatLng dest;
-    ArrayList<LatLng> MarkerPoints;
-    TextView ShowDistanceDuration;
-    Polyline line;
-    double lonDest, latDest, lonOrg, latOrg;
+    private Button btnCurrent;
+    private LatLng origin;
+    private LatLng dest;
+    private ArrayList<LatLng> MarkerPoints;
+    private TextView ShowDistanceDuration;
+    private Polyline line;
+    private RetrofitMaps retrofitMaps;
+    private double lonDest, latDest, lonOrg, latOrg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_route);
 
-        ShowDistanceDuration = (TextView) findViewById(R.id.show_distance_time);
+        startService(new Intent(this, LocationServices.class));
 
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            checkLocationPermission();
-        }
+        ShowDistanceDuration = (TextView) findViewById(R.id.show_distance_time);
+        btnCurrent = (Button) findViewById(R.id.btnCurrent);
+
+        retrofitMaps = ApiClient.createClient().create(RetrofitMaps.class);
+
+        btnCurrent.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goToCurrentLocation();
+            }
+        });
+//        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            checkLocationPermission();
+//        }
 
         MarkerPoints = new ArrayList<>();
-
+        getDestination();
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -73,10 +90,11 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+    @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
+        mMap.setMyLocationEnabled(true);
         // Add a marker in Sydney and move the camera
 //        LatLng sydney = new LatLng(-34, 151);
 //        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
@@ -90,7 +108,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
                 // clearing map and generating new marker points if user clicks on map more than two times
                 if (MarkerPoints.size() > 1) {
-                    mMap.clear();
+//                    mMap.clear();
                     MarkerPoints.clear();
                     MarkerPoints = new ArrayList<>();
                     ShowDistanceDuration.setText("");
@@ -137,17 +155,17 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
             }
         });
 
-        Button btnDriving = (Button) findViewById(R.id.btnDriving);
-        btnDriving.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                build_retrofit_and_get_response("driving");
-            }
-        });
+//        Button btnDriving = (Button) findViewById(R.id.btnDriving);
+//        btnDriving.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                getRoute("driving");
+//            }
+//        });
 
     }
 
-    private void build_retrofit_and_get_response(String type) {
+    private void getRoute(Double latOrg, Double lonOrg, Double latDest, Double lonDest) {
 
         String url = "https://maps.googleapis.com/maps/api/directions/";
 
@@ -158,9 +176,9 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
         RetrofitMaps service = retrofit.create(RetrofitMaps.class);
 
-        Call<Example> call = service.getDistanceDuration("metric", latOrg + "," + lonOrg, latDest + "," + lonDest, type);
+        Call<Example> call = service.getDistanceDuration("metric", latOrg + "," + lonOrg, latDest + "," + lonDest, "driving");
 
-        Log.d("log", "variable " + origin.latitude + " " + origin.longitude);
+//        Log.d("log", "variable " + origin.latitude + " " + origin.longitude);
 
         call.enqueue(new Callback<Example>() {
             @Override
@@ -235,50 +253,114 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         return poly;
     }
 
+    @SuppressLint("MissingPermission")
+    private void goToCurrentLocation() {
+        // Enable MyLocation Layer of Google Map
+
+
+        // Get LocationManager object from System Service LOCATION_SERVICE
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        // Create a criteria object to retrieve provider
+        Criteria criteria = new Criteria();
+
+        // Get the name of the best provider
+        String provider = locationManager.getBestProvider(criteria, true);
+
+        // Get Current Location
+        @SuppressLint("MissingPermission") Location myLocation = locationManager.getLastKnownLocation(provider);
+
+        //set map type
+//        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+
+        // Get latitude of the current location
+        double latitude = myLocation.getLatitude();
+
+        // Get longitude of the current location
+        double longitude = myLocation.getLongitude();
+
+        // Create a LatLng object for the current location
+        LatLng latLng = new LatLng(latitude, longitude);
+
+        // Show the current location in Google Map
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+
+        // Zoom in the Google Map
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude)).title("You are here!"));
+        getRoute(latitude, longitude, latDest, lonDest);
+    }
+
+    private void getDestination(){
+        Call<com.example.ai.mapsearch.Model.Response> call = retrofitMaps.getDestination("1");
+        call.enqueue(new Callback<com.example.ai.mapsearch.Model.Response>() {
+            @Override
+            public void onResponse(Response<com.example.ai.mapsearch.Model.Response> response, Retrofit retrofit) {
+                Log.d("Debug", "Code " + response.raw());
+
+                if(response.body().getCode().equals("200")){
+                    List<Destination> destinationList = response.body().getData();
+                    Log.d("Debug", "Destination " +response.body().getData().toString());
+                    latDest = destinationList.get(0).getDestinationLatitude();
+                    lonDest = destinationList.get(0).getDestinationLongitude();
+                    String name = destinationList.get(0).getDestinationName();
+                    mMap.addMarker(new MarkerOptions().position(new LatLng(latDest, lonDest)).title(name));
+
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+
+            }
+        });
+    }
+
+
     // Checking if Google Play Services Available or not
-    private boolean isGooglePlayServicesAvailable() {
-        GoogleApiAvailability googleAPI = GoogleApiAvailability.getInstance();
-        int result = googleAPI.isGooglePlayServicesAvailable(this);
-        if(result != ConnectionResult.SUCCESS) {
-            if(googleAPI.isUserResolvableError(result)) {
-                googleAPI.getErrorDialog(this, result,
-                        0).show();
-            }
-            return false;
-        }
-        return true;
-    }
+//    private boolean isGooglePlayServicesAvailable() {
+//        GoogleApiAvailability googleAPI = GoogleApiAvailability.getInstance();
+//        int result = googleAPI.isGooglePlayServicesAvailable(this);
+//        if(result != ConnectionResult.SUCCESS) {
+//            if(googleAPI.isUserResolvableError(result)) {
+//                googleAPI.getErrorDialog(this, result,
+//                        0).show();
+//            }
+//            return false;
+//        }
+//        return true;
+//    }
 
-    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
-    public boolean checkLocationPermission(){
-        if (ContextCompat.checkSelfPermission(this,
-                android.Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Asking user if explanation is needed
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    android.Manifest.permission.ACCESS_FINE_LOCATION)) {
-
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
-                //Prompt the user once explanation has been shown
-                ActivityCompat.requestPermissions(this,
-                        new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_LOCATION);
-
-
-            } else {
-                // No explanation needed, we can request the permission.
-                ActivityCompat.requestPermissions(this,
-                        new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_LOCATION);
-            }
-            return false;
-        } else {
-            return true;
-        }
-    }
+//    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+//    public boolean checkLocationPermission(){
+//        if (ContextCompat.checkSelfPermission(this,
+//                android.Manifest.permission.ACCESS_FINE_LOCATION)
+//                != PackageManager.PERMISSION_GRANTED) {
+//
+//            // Asking user if explanation is needed
+//            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+//                    android.Manifest.permission.ACCESS_FINE_LOCATION)) {
+//
+//                // Show an explanation to the user *asynchronously* -- don't block
+//                // this thread waiting for the user's response! After the user
+//                // sees the explanation, try again to request the permission.
+//
+//                //Prompt the user once explanation has been shown
+//                ActivityCompat.requestPermissions(this,
+//                        new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+//                        MY_PERMISSIONS_REQUEST_LOCATION);
+//
+//
+//            } else {
+//                // No explanation needed, we can request the permission.
+//                ActivityCompat.requestPermissions(this,
+//                        new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+//                        MY_PERMISSIONS_REQUEST_LOCATION);
+//            }
+//            return false;
+//        } else {
+//            return true;
+//        }
+//    }
 
 }

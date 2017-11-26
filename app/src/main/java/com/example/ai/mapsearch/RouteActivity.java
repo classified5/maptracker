@@ -18,12 +18,17 @@ import com.example.ai.mapsearch.API.RetrofitMaps;
 import com.example.ai.mapsearch.Background.LocationServices;
 import com.example.ai.mapsearch.Model.Destination;
 import com.example.ai.mapsearch.Model.Example;
+import com.example.ai.mapsearch.Model.Participant;
+import com.example.ai.mapsearch.Model.ResponseCoordinate;
+import com.example.ai.mapsearch.Model.ResponseParticipant;
+import com.example.ai.mapsearch.Utils.Constant;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -41,7 +46,7 @@ import retrofit.Retrofit;
 public class RouteActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
-    private Button btnCurrent;
+    private Button btnCurrent, btnRefresh;
     private LatLng origin;
     private LatLng dest;
     private ArrayList<LatLng> MarkerPoints;
@@ -49,6 +54,8 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
     private Polyline line;
     private RetrofitMaps retrofitMaps;
     private double lonDest, latDest, lonOrg, latOrg;
+    private Marker markerOrg = null, markerDest;
+    private List<Participant> participantList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,15 +66,14 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
         ShowDistanceDuration = (TextView) findViewById(R.id.show_distance_time);
         btnCurrent = (Button) findViewById(R.id.btnCurrent);
+        btnRefresh = (Button) findViewById(R.id.btnDriving);
 
         retrofitMaps = ApiClient.createClient().create(RetrofitMaps.class);
 
-        btnCurrent.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                goToCurrentLocation();
-            }
-        });
+        btnRefresh.setOnClickListener(buttonOperation);
+        btnCurrent.setOnClickListener(buttonOperation);
+
+
 //        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 //            checkLocationPermission();
 //        }
@@ -80,80 +86,84 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
     }
 
+    private View.OnClickListener buttonOperation = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            switch(view.getId()){
+                case R.id.btnCurrent:
+                    goToCurrentLocation();
+                    break;
+                case R.id.btnDriving:
+                    getParticipant();
+                    break;
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-    @SuppressLint("MissingPermission")
-    @Override
+
+            }
+        }
+    };
+
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        mMap.setMyLocationEnabled(true);
+//        mMap.setMyLocationEnabled(true);
         // Add a marker in Sydney and move the camera
 //        LatLng sydney = new LatLng(-34, 151);
 //        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
 
-        // Setting onclick event listener for the map
-        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-
-            @Override
-            public void onMapClick(LatLng point) {
-
-                // clearing map and generating new marker points if user clicks on map more than two times
-                if (MarkerPoints.size() > 1) {
-//                    mMap.clear();
-                    MarkerPoints.clear();
-                    MarkerPoints = new ArrayList<>();
-                    ShowDistanceDuration.setText("");
-                }
-
-                // Adding new item to the ArrayList
-                MarkerPoints.add(point);
-
-                // Creating MarkerOptions
-                MarkerOptions options = new MarkerOptions();
-
-                // Setting the position of the marker
-                options.position(point);
-
-                /**
-                 * For the start location, the color of marker is GREEN and
-                 * for the end location, the color of marker is RED.
-                 */
-                if (MarkerPoints.size() == 1) {
-                    options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-                    latOrg = point.latitude;
-                    lonOrg = point.longitude;
-
-                } else if (MarkerPoints.size() == 2) {
-                    options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-                    latDest = point.latitude;
-                    lonDest = point.longitude;
-                }
-
-
-                // Add new marker to the Google Map Android API V2
-                mMap.addMarker(options);
-
-                // Checks, whether start and end locations are captured
-                if (MarkerPoints.size() >= 2) {
-                    origin = MarkerPoints.get(0);
-//                    latOrg = MarkerPoints.get(0).latitude;
-//                    lonOrg = MarkerPoints.get(0).longitude;
-//                    latDest = MarkerPoints.get(1).latitude;
-//                    lonDest = MarkerPoints.get(1).longitude;
-                    dest = MarkerPoints.get(1);
-                }
-
-            }
-        });
+//        // Setting onclick event listener for the map
+//        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+//
+//            @Override
+//            public void onMapClick(LatLng point) {
+//
+//                // clearing map and generating new marker points if user clicks on map more than two times
+//                if (MarkerPoints.size() > 1) {
+////                    mMap.clear();
+////                    MarkerPoints.clear();
+//                    MarkerPoints = new ArrayList<>();
+//                    ShowDistanceDuration.setText("");
+//                }
+//
+//                // Adding new item to the ArrayList
+//                MarkerPoints.add(point);
+//
+//                // Creating MarkerOptions
+//                MarkerOptions options = new MarkerOptions();
+//
+//                // Setting the position of the marker
+//                options.position(point);
+//
+//                /**
+//                 * For the start location, the color of marker is GREEN and
+//                 * for the end location, the color of marker is RED.
+//                 */
+//                if (MarkerPoints.size() == 1) {
+//                    options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+//                    latOrg = point.latitude;
+//                    lonOrg = point.longitude;
+//
+//                } else if (MarkerPoints.size() == 2) {
+//                    options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+//                    latDest = point.latitude;
+//                    lonDest = point.longitude;
+//                }
+//
+//
+//                // Add new marker to the Google Map Android API V2
+//                mMap.addMarker(options);
+//
+//                // Checks, whether start and end locations are captured
+//                if (MarkerPoints.size() >= 2) {
+//                    origin = MarkerPoints.get(0);
+////                    latOrg = MarkerPoints.get(0).latitude;
+////                    lonOrg = MarkerPoints.get(0).longitude;
+////                    latDest = MarkerPoints.get(1).latitude;
+////                    lonDest = MarkerPoints.get(1).longitude;
+//                    dest = MarkerPoints.get(1);
+//                }
+//
+//            }
+//        });
 
 //        Button btnDriving = (Button) findViewById(R.id.btnDriving);
 //        btnDriving.setOnClickListener(new View.OnClickListener() {
@@ -188,9 +198,9 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                 Log.d("log", "Length " + response.body().getRoutes().size());
                 try {
                     //Remove previous line from map
-                    if (line != null) {
-                        line.remove();
-                    }
+//                    if (line != null) {
+//                        line.remove();
+//                    }
                     // This loop will go through all the results and add marker on each location.
                     for (int i = 0; i < response.body().getRoutes().size(); i++) {
                         String distance = response.body().getRoutes().get(i).getLegs().get(i).getDistance().getText();
@@ -255,6 +265,8 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
     @SuppressLint("MissingPermission")
     private void goToCurrentLocation() {
+
+//        if(!markerOrg.equals(null)) markerOrg.remove();
         // Enable MyLocation Layer of Google Map
 
 
@@ -274,29 +286,31 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 //        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
         // Get latitude of the current location
-        double latitude = myLocation.getLatitude();
+        latOrg = myLocation.getLatitude();
 
         // Get longitude of the current location
-        double longitude = myLocation.getLongitude();
+        lonOrg = myLocation.getLongitude();
 
         // Create a LatLng object for the current location
-        LatLng latLng = new LatLng(latitude, longitude);
+        LatLng latLng = new LatLng(latOrg, lonOrg);
 
         // Show the current location in Google Map
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
 
         // Zoom in the Google Map
         mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
-        mMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude)).title("You are here!"));
-        getRoute(latitude, longitude, latDest, lonDest);
+
+        markerOrg = mMap.addMarker(new MarkerOptions().position(new LatLng(latOrg, lonOrg)).title("You are here!"));
+        getRoute(latOrg, lonOrg, latDest, lonDest);
     }
 
     private void getDestination(){
-        Call<com.example.ai.mapsearch.Model.Response> call = retrofitMaps.getDestination("1");
-        call.enqueue(new Callback<com.example.ai.mapsearch.Model.Response>() {
+//        markerDest.remove();
+        Call<com.example.ai.mapsearch.Model.ResponseCoordinate> call = retrofitMaps.getDestination("1");
+        call.enqueue(new Callback<ResponseCoordinate>() {
             @Override
-            public void onResponse(Response<com.example.ai.mapsearch.Model.Response> response, Retrofit retrofit) {
-                Log.d("Debug", "Code " + response.raw());
+            public void onResponse(Response<com.example.ai.mapsearch.Model.ResponseCoordinate> response, Retrofit retrofit) {
+                Log.d(Constant.TAG, "Destination " + response.raw());
 
                 if(response.body().getCode().equals("200")){
                     List<Destination> destinationList = response.body().getData();
@@ -304,16 +318,47 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                     latDest = destinationList.get(0).getDestinationLatitude();
                     lonDest = destinationList.get(0).getDestinationLongitude();
                     String name = destinationList.get(0).getDestinationName();
-                    mMap.addMarker(new MarkerOptions().position(new LatLng(latDest, lonDest)).title(name));
+                    markerDest = mMap.addMarker(new MarkerOptions().position(new LatLng(latDest, lonDest)).title(name));
 
                 }
             }
 
             @Override
             public void onFailure(Throwable t) {
-
+                Log.d(Constant.TAG, "Error " + t.getMessage());
             }
         });
+    }
+
+    private void getParticipant(){
+        Call<ResponseParticipant> call = retrofitMaps.getParticipant("1", "1");
+        call.enqueue(new Callback<ResponseParticipant>() {
+            @Override
+            public void onResponse(Response<ResponseParticipant> response, Retrofit retrofit) {
+                Log.d(Constant.TAG, "Participant " + response.raw());
+
+                if(response.body().getCode().equals("200")){
+                    participantList = response.body().getData();
+                    displayParticipant();
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                Log.d(Constant.TAG, "Error " + t.getMessage());
+            }
+        });
+    }
+
+    private void displayParticipant(){
+        for(int i = 0; i < participantList.size(); i++){
+            mMap.addMarker(new MarkerOptions().position(new LatLng(participantList.get(i).getParticipantLatitude(), participantList.get(i).getParticipantLongitude()))
+                    .title(participantList.get(i).getParticipantName())
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+
+            getRoute(participantList.get(i).getParticipantLatitude(), participantList.get(i).getParticipantLongitude(), latDest,lonDest);
+
+        }
     }
 
 

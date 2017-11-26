@@ -6,6 +6,7 @@ package com.example.ai.mapsearch.Utils;
 
 public class Constant {
 
+    public static final String TAG = "DEBUG";
     public static final String BASE_URL = "http://192.168.1.106/laravelLearning/laravelLearning/public/api/";
 
 }

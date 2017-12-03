@@ -34,7 +34,10 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.gson.Gson;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import retrofit.Call;
@@ -50,11 +53,11 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
     private LatLng origin;
     private LatLng dest;
     private ArrayList<LatLng> MarkerPoints;
-    private TextView ShowDistanceDuration;
+    private TextView ShowDistanceDuration, showDistanceTimeUser;
     private Polyline line;
     private RetrofitMaps retrofitMaps;
     private double lonDest, latDest, lonOrg, latOrg;
-    private Marker markerOrg = null, markerDest;
+    private Marker markerOrg = null, markerDest, markerParticipant;
     private List<Participant> participantList;
 
     @Override
@@ -65,6 +68,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         startService(new Intent(this, LocationServices.class));
 
         ShowDistanceDuration = (TextView) findViewById(R.id.show_distance_time);
+        showDistanceTimeUser = (TextView) findViewById(R.id.show_distance_time_user);
         btnCurrent = (Button) findViewById(R.id.btnCurrent);
         btnRefresh = (Button) findViewById(R.id.btnDriving);
 
@@ -104,6 +108,8 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        markerOrg = mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("You are here!"));
+        markerParticipant = mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Participant!"));
 //        mMap.setMyLocationEnabled(true);
         // Add a marker in Sydney and move the camera
 //        LatLng sydney = new LatLng(-34, 151);
@@ -175,7 +181,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
     }
 
-    private void getRoute(Double latOrg, Double lonOrg, Double latDest, Double lonDest) {
+    private void getRoute(Double latOrg, Double lonOrg, Double latDest, Double lonDest, final String type) {
 
         String url = "https://maps.googleapis.com/maps/api/directions/";
 
@@ -196,6 +202,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                 Log.d("log", "Status " + response.raw() + "header " + response.headers() + "error " + response.errorBody());
                 Log.d("log", "Response " + new Gson().toJson(response.body()));
                 Log.d("log", "Length " + response.body().getRoutes().size());
+                int finalTime = 0;
                 try {
                     //Remove previous line from map
 //                    if (line != null) {
@@ -205,16 +212,48 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                     for (int i = 0; i < response.body().getRoutes().size(); i++) {
                         String distance = response.body().getRoutes().get(i).getLegs().get(i).getDistance().getText();
                         String time = response.body().getRoutes().get(i).getLegs().get(i).getDuration().getText();
+                        String tempTime = time;
+                        tempTime.trim();
+
+                        String[] realTime = tempTime.split(" ");
+
+                        Log.d("time", "real time " + realTime[0]);
+                        finalTime += Integer.parseInt(realTime[0]);
+                        Log.d("time", "final time " + finalTime);
                         Log.d("log", "Distance:" + distance + ", Duration:" + time);
-                        ShowDistanceDuration.setText("Distance:" + distance + ", Duration:" + time);
+
+                        Calendar calendar = Calendar.getInstance();
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm");
+                        String currentTime = dateFormat.format(calendar.getTime());
+                        Date date = dateFormat.parse(currentTime);
+                        calendar.setTime(date);
+                        calendar.add(Calendar.MINUTE, finalTime);
+                        String eta = dateFormat.format(calendar.getTime());
+
+                        Log.d("time", "current time " + currentTime + " " + eta);
+
+
                         String encodedString = response.body().getRoutes().get(0).getOverviewPolyline().getPoints();
                         List<LatLng> list = decodePoly(encodedString);
-                        line = mMap.addPolyline(new PolylineOptions()
-                                .addAll(list)
-                                .width(20)
-                                .color(Color.RED)
-                                .geodesic(true)
-                        );
+
+
+                        if (type.equals("participant")){
+                            ShowDistanceDuration.setText("Participant Data \nDistance: " + distance + "\nDuration: " + time + "\nETA: " + eta);
+                            line = mMap.addPolyline(new PolylineOptions()
+                                    .addAll(list)
+                                    .width(20)
+                                    .color(Color.GREEN)
+                                    .geodesic(true)
+                            );
+                        }else{
+                            showDistanceTimeUser.setText("User Data \nDistance: " + distance + "\nDuration: " + time +"\nETA: " + eta);
+                            line = mMap.addPolyline(new PolylineOptions()
+                                    .addAll(list)
+                                    .width(20)
+                                    .color(Color.RED)
+                                    .geodesic(true)
+                            );
+                        }
                     }
                 } catch (Exception e) {
                     Log.d("onResponse", "There is an error");
@@ -269,6 +308,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 //        if(!markerOrg.equals(null)) markerOrg.remove();
         // Enable MyLocation Layer of Google Map
 
+        markerOrg.remove();
 
         // Get LocationManager object from System Service LOCATION_SERVICE
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -301,7 +341,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
 
         markerOrg = mMap.addMarker(new MarkerOptions().position(new LatLng(latOrg, lonOrg)).title("You are here!"));
-        getRoute(latOrg, lonOrg, latDest, lonDest);
+        getRoute(latOrg, lonOrg, latDest, lonDest, "user");
     }
 
     private void getDestination(){
@@ -318,7 +358,9 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                     latDest = destinationList.get(0).getDestinationLatitude();
                     lonDest = destinationList.get(0).getDestinationLongitude();
                     String name = destinationList.get(0).getDestinationName();
-                    markerDest = mMap.addMarker(new MarkerOptions().position(new LatLng(latDest, lonDest)).title(name));
+                    markerDest = mMap.addMarker(new MarkerOptions().position(new LatLng(latDest, lonDest))
+                            .title(name)
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
 
                 }
             }
@@ -351,12 +393,15 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
     }
 
     private void displayParticipant(){
-        for(int i = 0; i < participantList.size(); i++){
-            mMap.addMarker(new MarkerOptions().position(new LatLng(participantList.get(i).getParticipantLatitude(), participantList.get(i).getParticipantLongitude()))
+        markerParticipant.remove();
+        for(int i = 0; i < 1; i++){
+            markerParticipant = mMap.addMarker(new MarkerOptions().position(new LatLng(participantList.get(i).getParticipantLatitude(), participantList.get(i).getParticipantLongitude()))
                     .title(participantList.get(i).getParticipantName())
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(participantList.get(i).getParticipantLatitude(), participantList.get(i).getParticipantLongitude())));
+            mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
 
-            getRoute(participantList.get(i).getParticipantLatitude(), participantList.get(i).getParticipantLongitude(), latDest,lonDest);
+            getRoute(participantList.get(i).getParticipantLatitude(), participantList.get(i).getParticipantLongitude(), latDest,lonDest, "participant");
 
         }
     }

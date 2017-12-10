@@ -59,7 +59,7 @@ public class LoginActivity extends AppCompatActivity {
                     getLogin();
                     break;
                 case R.id.btnRegister:
-
+                    startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
                     break;
             }
         }

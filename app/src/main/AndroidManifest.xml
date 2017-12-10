@@ -38,7 +38,7 @@
             android:label="@string/title_activity_maps" />
         <activity
             android:name=".RouteActivity"
-            android:label="@string/title_activity_route"></activity>
+            android:label="@string/title_activity_route" />
 
         <service
             android:name=".Background.LocationServices"
@@ -55,7 +55,8 @@
         <activity
             android:name=".DestinationActivity"
             android:label="Destination"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".RegisterActivity"></activity>
     </application>
 
 </manifest>

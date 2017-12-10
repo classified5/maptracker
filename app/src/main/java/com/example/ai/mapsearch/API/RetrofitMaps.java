@@ -50,4 +50,10 @@ public interface RetrofitMaps {
                                   @Field("name") String name,
                                   @Field("longitude") String longitude,
                                   @Field("latitude") String latitude);
+
+    @POST("registeruser")
+    @FormUrlEncoded
+    Call<Response> setUser(@Field("username") String username,
+                           @Field("name") String name,
+                           @Field("password") String password);
 }

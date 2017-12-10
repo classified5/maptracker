@@ -449,7 +449,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
             markerList.add(markerParticipant);
 
             mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(participantList.get(i).getParticipantLatitude(), participantList.get(i).getParticipantLongitude())));
-            mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
+            mMap.animateCamera(CameraUpdateFactory.zoomTo(10));
 
             getRoute(participantList.get(i).getParticipantLatitude(), participantList.get(i).getParticipantLongitude(), latDest,lonDest, "participant", participantList.get(i).getParticipantName());
 

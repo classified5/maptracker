@@ -2,15 +2,17 @@ package com.example.ai.mapsearch.Model;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
+
 /**
  * Created by A.I on 25/11/2017.
  */
 
-public class Destination {
+public class Destination implements Serializable {
 
-    @SerializedName("id")
-    private String id;
-    @SerializedName("name")
+    @SerializedName("destination_id")
+    private int id;
+    @SerializedName("destination_name")
     private String name;
     @SerializedName("user_id")
     private String userId;
@@ -18,12 +20,22 @@ public class Destination {
     private Double destinationLatitude;
     @SerializedName("destination_longitude")
     private Double destinationLongitude;
+    @SerializedName("name")
+    private String destinationBy;
 
-    public String getDestinationId() {
+    public String getDestinationBy() {
+        return destinationBy;
+    }
+
+    public void setDestinationBy(String destinationBy) {
+        this.destinationBy = destinationBy;
+    }
+
+    public int getDestinationId() {
         return id;
     }
 
-    public void setDestinationId(String id) {
+    public void setDestinationId(int id) {
         this.id = id;
     }
 

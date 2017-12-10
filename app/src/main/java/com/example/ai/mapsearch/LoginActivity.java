@@ -44,7 +44,7 @@ public class LoginActivity extends AppCompatActivity {
         prefManager = new PrefManager(getApplicationContext());
 
         if (prefManager.isLoggedIn()){
-            Intent intent = new Intent(LoginActivity.this, RouteActivity.class);
+            Intent intent = new Intent(LoginActivity.this, DestinationActivity.class);
             startActivity(intent);
             finish();
         }
@@ -77,7 +77,7 @@ public class LoginActivity extends AppCompatActivity {
                     prefManager.setLogin(true);
                     prefManager.setUser(response.body().getData().get(0).getId(), response.body().getData().get(0).getUsername(), response.body().getData().get(0).getName());
                     Log.d(Constant.TAG, "id " + response.body().getData().get(0).getId());
-                    Intent intent = new Intent(LoginActivity.this, RouteActivity.class);
+                    Intent intent = new Intent(LoginActivity.this, DestinationActivity.class);
                     startActivity(intent);
                     finish();
                 }

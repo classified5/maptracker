@@ -35,17 +35,15 @@
 
         <activity
             android:name=".MapsActivity"
-            android:label="@string/title_activity_maps"></activity>
+            android:label="@string/title_activity_maps" />
         <activity
             android:name=".RouteActivity"
-            android:label="@string/title_activity_route">
-
-        </activity>
+            android:label="@string/title_activity_route"></activity>
 
         <service
             android:name=".Background.LocationServices"
             android:exported="true"
-            android:process=":LocationServices"></service>
+            android:process=":LocationServices" />
 
         <activity android:name=".LoginActivity">
             <intent-filter>
@@ -54,6 +52,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".DestinationActivity"
+            android:label="@string/title_activity_destination"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

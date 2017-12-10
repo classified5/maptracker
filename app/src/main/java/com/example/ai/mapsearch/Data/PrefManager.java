@@ -2,6 +2,9 @@ package com.example.ai.mapsearch.Data;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
+
+import com.example.ai.mapsearch.Utils.Constant;
 
 /**
  * Created by A.I on 10/12/2017.
@@ -49,10 +52,12 @@ public class PrefManager {
 
     public void setDestination(int id){
         editor.putInt("destinationId", id);
+        Log.d(Constant.TAG, "set pref destination " + id);
         editor.commit();
     }
 
     public int getDestinationId(){
+        Log.d(Constant.TAG, "get pref destination " + sharedPreferences.getInt("destinationId", 0));
         return sharedPreferences.getInt("destinationId", 0);
     }
 

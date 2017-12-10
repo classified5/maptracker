@@ -21,10 +21,11 @@ import com.example.ai.mapsearch.API.ApiClient;
 import com.example.ai.mapsearch.API.RetrofitMaps;
 import com.example.ai.mapsearch.Adapter.ParticipantAdapter;
 import com.example.ai.mapsearch.Background.LocationServices;
+import com.example.ai.mapsearch.Data.PrefManager;
 import com.example.ai.mapsearch.Model.Destination;
 import com.example.ai.mapsearch.Model.Example;
 import com.example.ai.mapsearch.Model.Participant;
-import com.example.ai.mapsearch.Model.ResponseCoordinate;
+import com.example.ai.mapsearch.Model.ResponseDestination;
 import com.example.ai.mapsearch.Model.ResponseParticipant;
 import com.example.ai.mapsearch.Utils.Constant;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -68,6 +69,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
     private List<Participant> participantDetailList = new ArrayList<>();
     private RecyclerView rvParticipant;
     private ParticipantAdapter participantAdapter;
+    private PrefManager prefManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +88,15 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
         btnRefresh.setOnClickListener(buttonOperation);
         btnCurrent.setOnClickListener(buttonOperation);
+
+        prefManager = new PrefManager(getApplicationContext());
+        Intent intent = getIntent();
+        Bundle bundle = intent.getExtras();
+        Destination destination = (Destination) bundle.getSerializable("destination");
+
+        Log.d(Constant.TAG, "Destination id " + destination.getDestinationId());
+
+        prefManager.setDestination( destination.getDestinationId());
 
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
         rvParticipant.setLayoutManager(layoutManager);
@@ -380,10 +391,10 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
     private void getDestination(){
 
-        Call<com.example.ai.mapsearch.Model.ResponseCoordinate> call = retrofitMaps.getDestination("1");
-        call.enqueue(new Callback<ResponseCoordinate>() {
+        Call<com.example.ai.mapsearch.Model.ResponseDestination> call = retrofitMaps.getDestination(prefManager.getDestinationId());
+        call.enqueue(new Callback<ResponseDestination>() {
             @Override
-            public void onResponse(Response<com.example.ai.mapsearch.Model.ResponseCoordinate> response, Retrofit retrofit) {
+            public void onResponse(Response<com.example.ai.mapsearch.Model.ResponseDestination> response, Retrofit retrofit) {
                 Log.d(Constant.TAG, "Destination " + response.raw());
 
                 if(response.body().getCode().equals("200")){
@@ -407,7 +418,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
     }
 
     private void getParticipant(){
-        Call<ResponseParticipant> call = retrofitMaps.getParticipant("1", "1");
+        Call<ResponseParticipant> call = retrofitMaps.getParticipant(prefManager.getUserId(), prefManager.getDestinationId());
         call.enqueue(new Callback<ResponseParticipant>() {
             @Override
             public void onResponse(Response<ResponseParticipant> response, Retrofit retrofit) {

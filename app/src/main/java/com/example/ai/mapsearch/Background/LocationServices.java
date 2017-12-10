@@ -17,6 +17,7 @@ import android.util.Log;
 
 import com.example.ai.mapsearch.API.ApiClient;
 import com.example.ai.mapsearch.API.RetrofitMaps;
+import com.example.ai.mapsearch.Data.PrefManager;
 import com.example.ai.mapsearch.Model.Coordinate;
 
 import retrofit.Callback;
@@ -32,6 +33,7 @@ public class LocationServices extends Service{
     PowerManager.WakeLock wakeLock;
     private LocationManager locationManager;
     private RetrofitMaps retrofitMaps;
+    private PrefManager prefManager;
 
     @Nullable
     @Override
@@ -44,7 +46,7 @@ public class LocationServices extends Service{
         super.onCreate();
 
         PowerManager pm = (PowerManager) getSystemService(this.POWER_SERVICE);
-
+        prefManager = new PrefManager(getApplicationContext());
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DoNotSleep");
         retrofitMaps = ApiClient.createClient().create(RetrofitMaps.class);
         Log.d("Google", "Service Created");
@@ -72,7 +74,7 @@ public class LocationServices extends Service{
             if(location == null) return;
 
             if(isConnectingToInternet(getApplicationContext())){
-                Coordinate coordinate = new Coordinate("1","1",location.getLongitude(), location.getLatitude());
+                Coordinate coordinate = new Coordinate(prefManager.getUserId(), prefManager.getDestinationId(), location.getLongitude(), location.getLatitude());
 
                 try {
                     retrofit.Call<Coordinate> call = retrofitMaps.setCoordinate(coordinate);

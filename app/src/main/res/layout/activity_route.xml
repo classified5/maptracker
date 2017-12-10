@@ -63,13 +63,20 @@
                 android:layout_weight="1"
                 android:textSize="16dp" />
 
-            <TextView
-                android:id="@+id/tvParticipant"
+            <!--<TextView-->
+                <!--android:id="@+id/tvParticipant"-->
+                <!--android:layout_width="0dp"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:textColor="#299318"-->
+                <!--android:layout_weight="1"-->
+                <!--android:textSize="16dp" />-->
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/rvParticipant"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:textColor="#299318"
                 android:layout_weight="1"
-                android:textSize="16dp" />
+                android:scrollbars="vertical" />
 
 
         </LinearLayout>

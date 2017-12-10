@@ -15,6 +15,42 @@ public class Participant {
     @SerializedName("name")
     private String participantName;
 
+    private String distance, eta, time;
+
+    public Participant() {
+    }
+
+    public Participant(String participantName, String distance, String eta, String time) {
+        this.participantName = participantName;
+        this.distance = distance;
+        this.eta = eta;
+        this.time = time;
+    }
+
+    public String getDistance() {
+        return distance;
+    }
+
+    public void setDistance(String distance) {
+        this.distance = distance;
+    }
+
+    public String getEta() {
+        return eta;
+    }
+
+    public void setEta(String eta) {
+        this.eta = eta;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
+
     public Double getParticipantLongitude() {
         return participantLongitude;
     }

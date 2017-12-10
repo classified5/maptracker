@@ -8,6 +8,10 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -15,6 +19,7 @@ import android.widget.TextView;
 
 import com.example.ai.mapsearch.API.ApiClient;
 import com.example.ai.mapsearch.API.RetrofitMaps;
+import com.example.ai.mapsearch.Adapter.ParticipantAdapter;
 import com.example.ai.mapsearch.Background.LocationServices;
 import com.example.ai.mapsearch.Model.Destination;
 import com.example.ai.mapsearch.Model.Example;
@@ -60,6 +65,9 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
     private Marker markerOrg = null, markerDest, markerParticipant;
     private List<Participant> participantList;
     private List<Marker> markerList;
+    private List<Participant> participantDetailList = new ArrayList<>();
+    private RecyclerView rvParticipant;
+    private ParticipantAdapter participantAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,15 +76,21 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
         startService(new Intent(this, LocationServices.class));
 
-        tvParticipant = (TextView) findViewById(R.id.tvParticipant);
+//        tvParticipant = (TextView) findViewById(R.id.tvParticipant);
         tvUser = (TextView) findViewById(R.id.tvUser);
         btnCurrent = (Button) findViewById(R.id.btnCurrent);
         btnRefresh = (Button) findViewById(R.id.btnDriving);
+        rvParticipant = (RecyclerView) findViewById(R.id.rvParticipant);
 
         retrofitMaps = ApiClient.createClient().create(RetrofitMaps.class);
 
         btnRefresh.setOnClickListener(buttonOperation);
         btnCurrent.setOnClickListener(buttonOperation);
+
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
+        rvParticipant.setLayoutManager(layoutManager);
+        rvParticipant.setItemAnimator(new DefaultItemAnimator());
+        rvParticipant.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
 
 
 //        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -208,6 +222,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                 Log.d("log", "Length " + response.body().getRoutes().size());
                 int finalTime = 0;
                 try {
+
                     //Remove previous line from map
 //                    if (line != null) {
 //                        line.remove();
@@ -242,7 +257,10 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
 
                         if (type.equals("participant")){
-                            tvParticipant.setText("Participant Data \nDistance: " + distance + "\nDuration: " + time + "\nETA: " + eta);
+//                            tvParticipant.setText("Participant Data \nDistance: " + distance + "\nDuration: " + time + "\nETA: " + eta);
+                            Participant participant = new Participant("name", distance, eta, time);
+                            participantDetailList.add(participant);
+
                             line = mMap.addPolyline(new PolylineOptions()
                                     .addAll(list)
                                     .width(20)
@@ -259,6 +277,12 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                             );
                         }
                     }
+
+                    if (type.equals("participant")){
+                        participantAdapter = new ParticipantAdapter(participantDetailList);
+                        rvParticipant.setAdapter(participantAdapter);
+                    }
+
                 } catch (Exception e) {
                     Log.d("onResponse", "There is an error");
                     e.printStackTrace();
@@ -385,6 +409,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
                 if(response.body().getCode().equals("200")){
                     participantList = response.body().getData();
+                    participantDetailList.clear();
                     displayParticipant();
                 }
             }

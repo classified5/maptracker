@@ -79,7 +79,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 //        tvParticipant = (TextView) findViewById(R.id.tvParticipant);
         tvUser = (TextView) findViewById(R.id.tvUser);
         btnCurrent = (Button) findViewById(R.id.btnCurrent);
-        btnRefresh = (Button) findViewById(R.id.btnDriving);
+        btnRefresh = (Button) findViewById(R.id.btnRefresh);
         rvParticipant = (RecyclerView) findViewById(R.id.rvParticipant);
 
         retrofitMaps = ApiClient.createClient().create(RetrofitMaps.class);
@@ -115,8 +115,15 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                 case R.id.btnCurrent:
                     goToCurrentLocation();
                     break;
-                case R.id.btnDriving:
+                case R.id.btnRefresh:
+                    markerDest.remove();
+                    if (line != null) {
+                        line.remove();
+                    }
+                    getDestination();
+
                     getParticipant();
+                    goToCurrentLocation();
                     break;
 
 
@@ -128,6 +135,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         mMap = googleMap;
         markerOrg = mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("You are here!"));
         markerParticipant = mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Participant!"));
+        markerDest = mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Participant!"));
 //        mMap.setMyLocationEnabled(true);
         // Add a marker in Sydney and move the camera
 //        LatLng sydney = new LatLng(-34, 151);
@@ -199,7 +207,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
     }
 
-    private void getRoute(Double latOrg, Double lonOrg, Double latDest, Double lonDest, final String type) {
+    private void getRoute(Double latOrg, Double lonOrg, Double latDest, Double lonDest, final String type, final String name) {
 
         String url = "https://maps.googleapis.com/maps/api/directions/";
 
@@ -223,10 +231,8 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                 int finalTime = 0;
                 try {
 
-                    //Remove previous line from map
-//                    if (line != null) {
-//                        line.remove();
-//                    }
+//                    Remove previous line from map
+
                     // This loop will go through all the results and add marker on each location.
                     for (int i = 0; i < response.body().getRoutes().size(); i++) {
                         String distance = response.body().getRoutes().get(i).getLegs().get(i).getDistance().getText();
@@ -258,7 +264,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
                         if (type.equals("participant")){
 //                            tvParticipant.setText("Participant Data \nDistance: " + distance + "\nDuration: " + time + "\nETA: " + eta);
-                            Participant participant = new Participant("name", distance, eta, time);
+                            Participant participant = new Participant(name, distance, eta, time);
                             participantDetailList.add(participant);
 
                             line = mMap.addPolyline(new PolylineOptions()
@@ -369,11 +375,11 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
         mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
 
         markerOrg = mMap.addMarker(new MarkerOptions().position(new LatLng(latOrg, lonOrg)).title("You are here!"));
-        getRoute(latOrg, lonOrg, latDest, lonDest, "user");
+        getRoute(latOrg, lonOrg, latDest, lonDest, "user", "none");
     }
 
     private void getDestination(){
-//        markerDest.remove();
+
         Call<com.example.ai.mapsearch.Model.ResponseCoordinate> call = retrofitMaps.getDestination("1");
         call.enqueue(new Callback<ResponseCoordinate>() {
             @Override
@@ -434,7 +440,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
             mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(participantList.get(i).getParticipantLatitude(), participantList.get(i).getParticipantLongitude())));
             mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
 
-            getRoute(participantList.get(i).getParticipantLatitude(), participantList.get(i).getParticipantLongitude(), latDest,lonDest, "participant");
+            getRoute(participantList.get(i).getParticipantLatitude(), participantList.get(i).getParticipantLongitude(), latDest,lonDest, "participant", participantList.get(i).getParticipantName());
 
         }
     }

@@ -4,6 +4,7 @@ import com.example.ai.mapsearch.Model.Coordinate;
 import com.example.ai.mapsearch.Model.Example;
 import com.example.ai.mapsearch.Model.ResponseCoordinate;
 import com.example.ai.mapsearch.Model.ResponseParticipant;
+import com.example.ai.mapsearch.Model.ResponseUser;
 
 import retrofit.Call;
 import retrofit.http.Body;
@@ -33,4 +34,9 @@ public interface RetrofitMaps {
     @FormUrlEncoded
     Call<ResponseParticipant> getParticipant(@Field("user_id") String userId,
                                              @Field("destination_id") String destinationId);
+
+    @POST("login")
+    @FormUrlEncoded
+    Call<ResponseUser> getLogin(@Field("username") String username,
+                                @Field("password") String password);
 }

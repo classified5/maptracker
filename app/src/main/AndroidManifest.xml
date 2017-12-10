@@ -35,23 +35,25 @@
 
         <activity
             android:name=".MapsActivity"
-            android:label="@string/title_activity_maps">
-
-        </activity>
+            android:label="@string/title_activity_maps"></activity>
         <activity
             android:name=".RouteActivity"
             android:label="@string/title_activity_route">
+
+        </activity>
+
+        <service
+            android:name=".Background.LocationServices"
+            android:exported="true"
+            android:process=":LocationServices"></service>
+
+        <activity android:name=".LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service
-            android:name=".Background.LocationServices"
-            android:exported="true"
-            android:process=":LocationServices" >
-        </service>
     </application>
 
 </manifest>

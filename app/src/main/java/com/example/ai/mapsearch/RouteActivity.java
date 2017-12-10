@@ -53,12 +53,13 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
     private LatLng origin;
     private LatLng dest;
     private ArrayList<LatLng> MarkerPoints;
-    private TextView ShowDistanceDuration, showDistanceTimeUser;
+    private TextView tvParticipant, tvUser;
     private Polyline line;
     private RetrofitMaps retrofitMaps;
     private double lonDest, latDest, lonOrg, latOrg;
     private Marker markerOrg = null, markerDest, markerParticipant;
     private List<Participant> participantList;
+    private List<Marker> markerList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,8 +68,8 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
         startService(new Intent(this, LocationServices.class));
 
-        ShowDistanceDuration = (TextView) findViewById(R.id.show_distance_time);
-        showDistanceTimeUser = (TextView) findViewById(R.id.show_distance_time_user);
+        tvParticipant = (TextView) findViewById(R.id.tvParticipant);
+        tvUser = (TextView) findViewById(R.id.tvUser);
         btnCurrent = (Button) findViewById(R.id.btnCurrent);
         btnRefresh = (Button) findViewById(R.id.btnDriving);
 
@@ -83,6 +84,9 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 //        }
 
         MarkerPoints = new ArrayList<>();
+        markerList = new ArrayList<Marker>();
+
+
         getDestination();
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -127,7 +131,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 ////                    mMap.clear();
 ////                    MarkerPoints.clear();
 //                    MarkerPoints = new ArrayList<>();
-//                    ShowDistanceDuration.setText("");
+//                    tvParticipant.setText("");
 //                }
 //
 //                // Adding new item to the ArrayList
@@ -238,7 +242,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
 
                         if (type.equals("participant")){
-                            ShowDistanceDuration.setText("Participant Data \nDistance: " + distance + "\nDuration: " + time + "\nETA: " + eta);
+                            tvParticipant.setText("Participant Data \nDistance: " + distance + "\nDuration: " + time + "\nETA: " + eta);
                             line = mMap.addPolyline(new PolylineOptions()
                                     .addAll(list)
                                     .width(20)
@@ -246,7 +250,7 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
                                     .geodesic(true)
                             );
                         }else{
-                            showDistanceTimeUser.setText("User Data \nDistance: " + distance + "\nDuration: " + time +"\nETA: " + eta);
+                            tvUser.setText("User Data \nDistance: " + distance + "\nDuration: " + time +"\nETA: " + eta);
                             line = mMap.addPolyline(new PolylineOptions()
                                     .addAll(list)
                                     .width(20)
@@ -394,10 +398,14 @@ public class RouteActivity extends FragmentActivity implements OnMapReadyCallbac
 
     private void displayParticipant(){
         markerParticipant.remove();
-        for(int i = 0; i < 1; i++){
+        markerList.clear();
+        for(int i = 0; i < participantList.size(); i++){
             markerParticipant = mMap.addMarker(new MarkerOptions().position(new LatLng(participantList.get(i).getParticipantLatitude(), participantList.get(i).getParticipantLongitude()))
                     .title(participantList.get(i).getParticipantName())
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+
+            markerList.add(markerParticipant);
+
             mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(participantList.get(i).getParticipantLatitude(), participantList.get(i).getParticipantLongitude())));
             mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
 

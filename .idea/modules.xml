@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/MapSearch.iml" filepath="$PROJECT_DIR$/MapSearch.iml" />
+      <module fileurl="file://E:\maptracker\maptracker\MapSearch.iml" filepath="E:\maptracker\maptracker\MapSearch.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://E:\maptracker\maptracker\app\app.iml" filepath="E:\maptracker\maptracker\app\app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/maptracker.iml" filepath="$PROJECT_DIR$/maptracker.iml" />
     </modules>
   </component>
 </project>

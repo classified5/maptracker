@@ -1,13 +1,20 @@
 package com.example.ai.mapsearch;
 
+import android.content.Intent;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
+import com.example.ai.mapsearch.API.ApiClient;
+import com.example.ai.mapsearch.API.RetrofitMaps;
+import com.example.ai.mapsearch.Data.PrefManager;
+import com.example.ai.mapsearch.Utils.Constant;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -18,14 +25,20 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.io.IOException;
 import java.util.List;
 
+import retrofit.Call;
+import retrofit.Callback;
+import retrofit.Response;
+import retrofit.Retrofit;
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private EditText etSearch, etLonitude, etLatitude;
-    private Button btnSearch, btnLatLng;
+    private Button btnSearch, btnLatLng, btnSetDestination;
     private String location;
     private Double longitude, latitude;
-
+    private RetrofitMaps retrofitMaps;
+    private PrefManager prefManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,12 +49,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        retrofitMaps = ApiClient.createClient().create(RetrofitMaps.class);
+        prefManager = new PrefManager(getApplicationContext());
+
         etSearch = (EditText) findViewById(R.id.etSearch);
         btnSearch = (Button) findViewById(R.id.btnSearch);
         etLatitude = (EditText) findViewById(R.id.etLatitude);
         etLonitude = (EditText) findViewById(R.id.etLongitude);
         btnLatLng = (Button) findViewById(R.id.btnLatLng);
+        btnSetDestination = (Button) findViewById(R.id.btnSetDestination);
 
+        btnSetDestination.setOnClickListener(buttonOperation);
         btnSearch.setOnClickListener(buttonOperation);
         btnLatLng.setOnClickListener(buttonOperation);
     }
@@ -61,14 +79,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+//        LatLng sydney = new LatLng(-34, 151);
+//        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+//        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
 
     }
 
     public void onMapSearch(String type){
-
+        mMap.clear();
         List<Address> addressList = null;
         Geocoder geocoder = new Geocoder(this);
         if(type.equals("location")){
@@ -97,7 +115,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Address address = addressList.get(0);
         LatLng latlng = new LatLng(address.getLatitude(), address.getLongitude());
         mMap.addMarker(new MarkerOptions().position(latlng).title(address.getAddressLine(0)));
-        mMap.animateCamera(CameraUpdateFactory.newLatLng(latlng));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
 
 
 
@@ -121,10 +140,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }
                     break;
 
+                case R.id.btnSetDestination:
+                    sendDestination();
+                    break;
+
             }
         }
     };
 
+    private void sendDestination(){
+        Call<com.example.ai.mapsearch.Model.Response> call = retrofitMaps.setDestination(prefManager.getUserId(), etSearch.getText().toString(), etLonitude.getText().toString(), etLatitude.getText().toString());
+        call.enqueue(new Callback<com.example.ai.mapsearch.Model.Response>() {
+            @Override
+            public void onResponse(Response<com.example.ai.mapsearch.Model.Response> response, Retrofit retrofit) {
+                Log.d(Constant.TAG, "Set Destination " + response.raw());
+                if(response.body().getCode().equals("200")){
+                    Toast.makeText(MapsActivity.this, "Destination Set!", Toast.LENGTH_SHORT);
+                    startActivity(new Intent(MapsActivity.this, DestinationActivity.class));
+                    finish();
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                Log.d(Constant.TAG, "Set Destination Error " + t.toString());
+            }
+        });
+    }
 }
 
 

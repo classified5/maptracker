@@ -1,8 +1,7 @@
 package com.example.ai.mapsearch;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.DividerItemDecoration;
@@ -10,11 +9,13 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import com.example.ai.mapsearch.API.ApiClient;
 import com.example.ai.mapsearch.API.RetrofitMaps;
 import com.example.ai.mapsearch.Adapter.DestinationAdapter;
+import com.example.ai.mapsearch.Data.PrefManager;
 import com.example.ai.mapsearch.Model.Destination;
 import com.example.ai.mapsearch.Model.ResponseDestination;
 import com.example.ai.mapsearch.Utils.Constant;
@@ -33,6 +34,7 @@ public class DestinationActivity extends AppCompatActivity {
     private DestinationAdapter destinationAdapter;
     private RetrofitMaps retrofitMaps;
     private List<Destination> destinationList = new ArrayList<>();
+    private PrefManager prefManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,16 +52,18 @@ public class DestinationActivity extends AppCompatActivity {
 
         retrofitMaps = ApiClient.createClient().create(RetrofitMaps.class);
 
+        prefManager = new PrefManager(getApplicationContext());
+
         getDestination();
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+//        fab.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
+//            }
+//        });
     }
 
     private void getDestination(){
@@ -71,7 +75,7 @@ public class DestinationActivity extends AppCompatActivity {
 
                 if(response.body().getCode().equals("200")){
                     destinationList = response.body().getData();
-                    Log.d(Constant.TAG, "Destination data " + destinationList.get(0).getDestinationName());
+                    Log.d(Constant.TAG, "Destination data " + destinationList.get(1).getDestinationName());
 
                     destinationAdapter = new DestinationAdapter(destinationList);
                     rvDestination.setAdapter(destinationAdapter);
@@ -84,5 +88,27 @@ public class DestinationActivity extends AppCompatActivity {
                 Log.d(Constant.TAG, "Error " + t.toString());
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.action_bar, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if(id == R.id.menuAddDestination){
+            Intent intent = new Intent(DestinationActivity.this, MapsActivity.class);
+            startActivity(intent);
+        }else if(id == R.id.menuLogout){
+            prefManager.setLogin(false);
+            prefManager.deleteUser();
+            Intent intent = new Intent(DestinationActivity.this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

@@ -25,8 +25,6 @@ public class DestinationAdapter extends RecyclerView.Adapter<DestinationAdapter.
 
     public List<Destination> destinationList;
 
-
-
     public class DestinationViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
 
         public TextView tvDestinationName, tvDestinationBy, tvDestinationLongitude, tvDestinationLatitude;
@@ -82,9 +80,5 @@ public class DestinationAdapter extends RecyclerView.Adapter<DestinationAdapter.
     @Override
     public int getItemCount() {
         return destinationList.size();
-    }
-
-    public List<Destination> getDestinationList(){
-        return destinationList;
     }
 }

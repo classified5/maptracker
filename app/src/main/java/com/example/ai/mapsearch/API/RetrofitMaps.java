@@ -2,6 +2,7 @@ package com.example.ai.mapsearch.API;
 
 import com.example.ai.mapsearch.Model.Coordinate;
 import com.example.ai.mapsearch.Model.Example;
+import com.example.ai.mapsearch.Model.Response;
 import com.example.ai.mapsearch.Model.ResponseDestination;
 import com.example.ai.mapsearch.Model.ResponseParticipant;
 import com.example.ai.mapsearch.Model.ResponseUser;
@@ -42,4 +43,11 @@ public interface RetrofitMaps {
 
     @GET("getalldestination")
     Call<ResponseDestination> getAllDestination();
+
+    @POST("setdestination")
+    @FormUrlEncoded
+    Call<Response> setDestination(@Field("user_id") int userId,
+                                  @Field("name") String name,
+                                  @Field("longitude") String longitude,
+                                  @Field("latitude") String latitude);
 }
